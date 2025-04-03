@@ -11,9 +11,9 @@
 
 \usepackage[italian]{cleveref}
 
-\title{Meta-relazione per\\``esame''}
+\title{Relazione Assignment-01 \\ per l'esame \\ ``Programmazione Concorrente e distribuita''}
+\author{Rattini Emiliano\\Giosuè Giocondo Mainardi}
 
-\author{Giosuè Giocondo Mainardi}
 \date{\today}
 
 
@@ -21,117 +21,46 @@
 
 \maketitle
 
-\begin{abstract}
-Questo è l'abstract, la struttura della relazione è \textit{indicativa}.
-
-L'uso di \LaTeX{} è vantaggioso per chi ama l'approccio ``what you mean is what you get'', ossia voglia disaccoppiare il contenuto dall'effettivo rendering del documento, accollando al motore \LaTeX{} l'onere di produrre un documento gradevole con la struttura ed il contenuto forniti.
-%
-Chi non volesse installare l'ambiente di compilazione in locale può valutare l'utilizzo dell'applicazione web \href{https://www.overleaf.com/}{Overleaf}.
-%
-
-Esempio di footnote con MermaidJS\footnote{\url{https://mermaid.live/}} o PlantUML \footnote{\url{https://plantuml.com/}}.
-\end{abstract}
-
 \tableofcontents
 
 \chapter{Analisi}
+% A brief analsysis of the problem, focusing in particular aspects that are relevant from concurrent point of view.
 
-\textit{Esempio in corsivo.}
-\section{Requisiti}
+\chapter{Design}
+% A description of the adopted design, the strategy and architecture.
 
-Per enfatizzare \emph{requisiti}.
+\chapter{Comportamento}
+% A description of the behaviour of the system using one or multiple Petri Nets, choosing the propor level of abstraction.
 
-\subsection*{Sottosezione con elenco}
-\begin{itemize}
-	\item primo punto
-	\item secondo punto
-	\item terzo punto
-\end{itemize}
+\chapter{Test di performance}
+% Performance tests, to analyse and discuss the performance of the programs (for each version) compared to the sequential version
 
-\subsection*{Sottosezione importante: Esempio}
+\chapter{Verifica con JPF}
+% Verification of the program (a model of it) using JPF. For this point, only the Java multithreaded programming version may be considered.
 
-\section{Sezione esempio}
-
-Anche una parte in \textbf{grassetto.}
-
-\subsection*{Esempio}
-Esempio immagine \Cref{img:example}.
-
-\begin{figure}[H]
-\centering{}
-\includegraphics{img/example_img.pdf}
-\caption{descrizione immagine.}
-\label{img:example}
-\end{figure}
-
-\chapter{Capitolo 2}
-
-\section{Sezione 1 Capitolo 2}
-
-Contenuto.
-
-\subsection*{Esempio}
-Conseguentemente, GLaDOS è un ``observable'' per Output.
-
-Qua esempio di immagine inserita sul posto.
-
+\chapter{Esempi di utilizzo}
+Esempio di immagine inserita sul posto.
 \begin{figure}[h]
 \centering{}
 \includegraphics[width=\textwidth]{img/example_img.pdf}
 \caption{L'interfaccia \texttt{GLaDOS}.}
-\label{img:example2}
+\label{img:example}
 \end{figure}
-
-\section{Altra sezione}
-
-\textbf{Sottotesto in grassetto}.
-
-\subsection*{Esempio minimale}
-
-\subsubsection{Sotto sotto sezione con paragrafi}
-
-\paragraph{Paragrafo1} Contenuto.
 
 \paragraph{Paragrafo Risposta 1} Contenuto \textit{paragrafo}, con riferimento immagine
 \Cref{img:example}: e anche \texttt{Scrittura unicode}.
 
-\chapter{Capitolo 3}
-\section{Sezione}
-
-Contenuto
-
-\subsection{Esempio con sottosezioni e permalink}
-
-\subsubsection{Utilizzo di \texttt{LoadingCache} dalla libreria Google Guava}
-
+Esempio di link
 Permalink: \url{https://github.com/AlchemistSimulator/Alchemist/blob/d8a1799027d7d685569e15316a32e6394632ce71/alchemist-incarnation-protelis/src/main/java/it/unibo/alchemist/protelis/AlchemistExecutionContext.java#L141-L143}
 
-\subsubsection{Utilizzo di \texttt{Stream} e lambda expressions}
+% \appendix
+% \chapter{Capitolo appendice 1}
 
-Usate pervasivamente. Il seguente è un singolo esempio.
-Permalink: \url{https://github.com/AlchemistSimulator/Alchemist/blob/d8a1799027d7d685569e15316a32e6394632ce71/alchemist-incarnation-protelis/src/main/java/it/unibo/alchemist/model/ProtelisIncarnation.java#L98-L120}
+% Contenuto.
 
-\subsubsection{Scrittura di metodo generico con parametri contravarianti}
+% \chapter{Capitolo appendice 2}
 
-Permalink: \url{https://github.com/AlchemistSimulator/Alchemist/blob/d8a1799027d7d685569e15316a32e6394632ce71/alchemist-incarnation-protelis/src/main/java/it/unibo/alchemist/protelis/AlchemistExecutionContext.java#L141-L143}
-
-\chapter{Capitolo finale}
-
-In quest'ultimo capitolo si tirano le somme del lavoro svolto e si delineano eventuali sviluppi
-futuri.
-
-\section{Sezione di commenti finali}
-
-\textbf{È richiesta una sezione per ciascun membro del gruppo, obbligatoriamente}.
-
-\appendix
-\chapter{Capitolo appendice 1}
-
-Contenuto.
-
-\chapter{Capitolo appendice 2}
-
-Contenuto.
+% Contenuto.
 
 \bibliographystyle{alpha}
 \bibliography{report-template}
