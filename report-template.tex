@@ -198,32 +198,13 @@ I test sono stati condotti con la seguente metodologia:
 
 \chapter{Verifica con JPF}
 % Verification of the program (a model of it) using JPF. For this point, only the Java multithreaded programming version may be considered.
+In questa sezione viene discussa la verifica formale dell'implementazione multi-thread dell'algoritmo dei boid utilizzando Java PathFinder (JPF), uno strumento di model checking sviluppato dalla NASA per analizzare programmi Java. 
+JPF è particolarmente utile per verificare le proprietà di sicurezza e correttezza in sistemi concorrenti, individuando problematiche tipiche della programmazione parallela.
 
-\chapter{Esempi di utilizzo}
-Esempio di immagine inserita sul posto.
-\begin{figure}[h]
-\centering{}
-\includegraphics[width=\textwidth]{img/example_img.pdf}
-\caption{L'interfaccia \texttt{GLaDOS}.}
-\label{img:example}
-\end{figure}
+L'analisi si è concentrata su una versione semplificata del modello, mantenendo gli aspetti essenziali di sincronizzazione tra i thread attraverso la nostra implementazione personalizzata `MyBarrier`. La verifica ha l'obiettivo di garantire l'assenza di deadlock e la corretta sincronizzazione tra le fasi di calcolo delle velocità e aggiornamento delle posizioni evitando corse critiche, elementi fondamentali per la correttezza dell'algoritmo.
 
-\paragraph{Paragrafo Risposta 1} Contenuto \textit{paragrafo}, con riferimento immagine
-\Cref{img:example}: e anche \texttt{Scrittura unicode}.
+\section{Scorporazione del modello}
 
-Esempio di link
-Permalink: \url{https://github.com/AlchemistSimulator/Alchemist/blob/d8a1799027d7d685569e15316a32e6394632ce71/alchemist-incarnation-protelis/src/main/java/it/unibo/alchemist/protelis/AlchemistExecutionContext.java#L141-L143}
-
-% \appendix
-% \chapter{Capitolo appendice 1}
-
-% Contenuto.
-
-% \chapter{Capitolo appendice 2}
-
-% Contenuto.
-
-\bibliographystyle{alpha}
-\bibliography{report-template}
+\section{Risultati}
 
 \end{document}
