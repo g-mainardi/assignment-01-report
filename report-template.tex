@@ -54,9 +54,14 @@ Da questa classe astratta derivano le implementazioni concrete:
 
 La versione con Virtual Thread (`VirtualThreadSimulator`) estende `PlatformSimulator`, condividendo gran parte della logica ma differenziandosi nelle modalità di creazione e gestione dei thread.
 
+\section{Modifiche generali}
 Rispetto all'implementazione sequenziale, è stata rielaborata la gestione del framerate mediante un contatore atomico incrementato alla conclusione di ogni ciclo completo di aggiornamento (velocità e posizioni) e comunicato all'interfaccia grafica tramite un thread dedicato.
 
 L'architettura è stata progettata per massimizzare la reattività dell'interfaccia utente: le operazioni di avvio, interruzione e ripresa della simulazione vengono gestite attraverso variabili di stato condivise, evitando operazioni bloccanti nel ciclo di rendering.
+
+Una modifica architetturale significativa è stata la migrazione della generazione iniziale dei boid dalla View al Controller. Questo cambio ha migliorato la reattività dell'interfaccia utente, evitando di sovraccaricare l'Event Dispatch Thread (EDT) di Swing con operazioni computazionalmente intensive.
+
+Questo approccio permette di eseguire la creazione dei boid sul main thread, lasciando l'EDT libero di gestire esclusivamente gli eventi dell'interfaccia grafica, garantendo maggiore fluidità dell'applicazione, soprattutto con simulazioni di grandi dimensioni.
 
 \section{Multithreaded}
 L'implementazione multithreaded adotta una strategia di decomposizione del dominio, distribuendo il carico di calcolo su un numero di thread equivalente alle unità di elaborazione disponibili nel sistema. Ciascun thread gestisce una porzione specifica dell'insieme dei boid, occupandosi del calcolo delle velocità e dell'aggiornamento delle posizioni.
@@ -125,6 +130,10 @@ Una volta inizializzata l'applicazione con un numero specificato di boid, l'uten
     \caption{Rete di Petri per il flusso di esecuzione con input dell'utente.}
     \label{fig:rete_app_flow}
 \end{figure}
+
+Per chiarire il comportamento del comando di stop nella rete di Petri mostrata in Fig. \ref{fig:rete_app_flow}, è importante sottolineare che l'evento di stop interrompe immediatamente l'esecuzione dei thread attivi, senza attendere il completamento del ciclo di calcolo corrente.
+
+Questo comportamento è intenzionale e riflette l'implementazione del sistema, dove il comando di stop ha priorità assoluta e causa la terminazione immediata di tutti i thread di simulazione, indipendentemente dal loro stato di avanzamento nel ciclo di calcolo
 
 \section{Ciclo update}
 Il ciclo di aggiornamento della simulazione inizia con lo stato iniziale \texttt{start}, seguito dalla fase di calcolo delle velocità (\texttt{update velocity}) eseguita in parallelo da thread distinti (nella figura due). Una volta completato il calcolo, i thread raggiungono una barriera di sincronizzazione (\texttt{velocity barrier}), che garantisce che tutte le velocità siano state aggiornate prima di procedere.
