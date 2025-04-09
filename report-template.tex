@@ -111,6 +111,34 @@ Questa architettura sfrutta la leggerezza computazionale dei virtual threads, in
 
 \chapter{Comportamento}
 % A description of the behaviour of the system using one or multiple Petri Nets, choosing the propor level of abstraction.
+Il comportamento del sistema di simulazione dei boid viene formalizzato attraverso reti di Petri che catturano gli aspetti dinamici e la sincronizzazione tra i diversi componenti. Questo modello formale permette di rappresentare efficacemente sia l'interazione dell'utente con l'applicazione che il ciclo di aggiornamento interno della simulazione.
+
+Le reti di Petri presentate di seguito evidenziano due livelli di astrazione: il primo descrive il flusso di controllo dell'applicazione in risposta ai comandi dell'utente (avvio, arresto, sospensione), mentre il secondo si concentra sul ciclo di aggiornamento della simulazione, mostrando le dipendenze tra il calcolo delle velocità e l'aggiornamento delle posizioni, nonché i punti di sincronizzazione necessari per mantenere la coerenza del modello nelle diverse implementazioni parallele.
+
+Questa rappresentazione formale consente di verificare la correttezza dell'implementazione rispetto alle proprietà desiderate, come l'assenza di deadlock e la garanzia che gli aggiornamenti avvengano nella sequenza corretta, indipendentemente dal grado di parallelismo adottato.
+
+\section{Flusso d'esecuzione}
+Una volta inizializzata l'applicazione con un numero specificato di boid, l'utente può avviare la simulazione tramite il comando \texttt{start}. Durante l'esecuzione, è possibile fermarne completamente il funzionamento con \texttt{stop} (che riporta il sistema allo stato iniziale liberando tutte le risorse), oppure metterla temporaneamente in pausa con \texttt{suspend} per poi riprenderla successivamente con \texttt{resume}.
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{rete_app_flow.pdf}
+    \caption{Rete di Petri per il flusso di esecuzione con input dell'utente.}
+    \label{fig:rete_app_flow}
+\end{figure}
+
+\section{Ciclo update}
+Il ciclo di aggiornamento della simulazione inizia con lo stato iniziale \texttt{start}, seguito dalla fase di calcolo delle velocità (\texttt{update velocity}) eseguita in parallelo da thread distinti (nella figura due). Una volta completato il calcolo, i thread raggiungono una barriera di sincronizzazione (\texttt{velocity barrier}), che garantisce che tutte le velocità siano state aggiornate prima di procedere.
+
+Successivamente, i thread entrano nella fase di aggiornamento delle posizioni (\texttt{update position}), anch'essa eseguita in parallelo. Anche in questo caso, una barriera di sincronizzazione (\texttt{position barrier}) assicura che tutte le posizioni siano state aggiornate correttamente prima di tornare allo stato iniziale, completando così un ciclo di aggiornamento.
+
+Questa rete evidenzia chiaramente i punti di sincronizzazione necessari per mantenere la coerenza del modello, garantendo che le operazioni di calcolo delle velocità e aggiornamento delle posizioni siano eseguite in modo sequenziale e coordinato tra i thread.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{rete_update_cycle.pdf}
+    \caption{Rete di Petri per il ciclo di aggiornamento della simulazione.}
+    \label{fig:rete_update_cycle}
+\end{figure}
 
 \chapter{Test di performance}
 % Performance tests, to analyse and discuss the performance of the programs (for each version) compared to the sequential version
