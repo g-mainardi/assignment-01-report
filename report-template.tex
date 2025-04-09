@@ -142,6 +142,59 @@ Questa rete evidenzia chiaramente i punti di sincronizzazione necessari per mant
 
 \chapter{Test di performance}
 % Performance tests, to analyse and discuss the performance of the programs (for each version) compared to the sequential version
+Per valutare l'efficacia delle diverse implementazioni, sono stati condotti test di performance strutturati su diversi scenari e parametri di simulazione. I test sono stati eseguiti su una macchina con [n core] e hanno comparato le quattro versioni dell'algoritmo: sequenziale, platform threads, executor framework e virtual threads.
+
+\section{Metodologia}
+I test sono stati condotti con la seguente metodologia:
+\begin{itemize}
+    \item Numero di boid testati: [range numerico]
+    \item Durata di ciascun test: [durata]
+    \item Metriche raccolte: framerate medio (FPS)
+    \item Numero di ripetizioni per test: [numero] per garantire significatività statistica
+\end{itemize}
+
+\section{Risultati}
+
+\subsection{Versione Sequenziale}
+\begin{itemize}
+    \item Prestazioni baseline con [numero] boid: [valori]
+    \item Scalabilità all'aumentare del numero di boid: [descrizione trend]
+    \item Considerazioni sul collo di bottiglia: [analisi]
+\end{itemize}
+
+\subsection{Versione Platform Threads}
+\begin{itemize}
+    \item Prestazioni con [numero] boid e [numero] thread: [valori]
+    \item Speedup rispetto alla versione sequenziale: [fattore]
+    \item Efficienza con diverse dimensioni di partizione: [analisi]
+    \item Overhead di sincronizzazione: [valutazione]
+\end{itemize}
+
+\subsection{Versione Executor Framework}
+\begin{itemize}
+    \item Prestazioni con [numero] boid e dimensione task [valore]: [valori]
+    \item Speedup rispetto alla versione sequenziale: [fattore]
+    \item Impatto della granularità dei task: [analisi]
+    \item Overhead di gestione dei task: [valutazione]
+\end{itemize}
+
+\subsection{Versione Virtual Threads}
+\begin{itemize}
+    \item Prestazioni con [numero] boid e [numero] virtual threads: [valori]
+    \item Speedup rispetto alla versione sequenziale: [fattore]
+    \item Comparazione con platform threads: [analisi differenze]
+    \item Comportamento con elevato numero di threads: [osservazioni]
+\end{itemize}
+
+\section{Analisi Comparativa}
+% Placeholder per un grafico di confronto delle prestazioni
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.8\textwidth]{performance_comparison.pdf}
+%     \caption{Comparazione del framerate medio tra le quattro implementazioni al variare del numero di boid.}
+%     \label{fig:performance_comparison}
+% \end{figure}
+
 
 \chapter{Verifica con JPF}
 % Verification of the program (a model of it) using JPF. For this point, only the Java multithreaded programming version may be considered.
