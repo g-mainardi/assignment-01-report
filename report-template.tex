@@ -25,44 +25,89 @@
 
 \chapter{Analisi}
 % A brief analsysis of the problem, focusing in particular aspects that are relevant from concurrent point of view.
-Il programma dei boid, ideato da Craig Reynolds nel 1986, modella un sistema in cui più entità, appunto i boid,
-si muovono nello spazio modificando la propria traiettoria in base ai boid che hanno intorno ed a dei parametri definiti.
-Considerado che ogni boid dovrà modificare la propria velocità, leggendo la posizione dei vicini, l'approccio migliore
-sarà probabilmente quello di modificare prima tutte le velocità per poi aggiornare tutte le posizioni, ed infine
-comunicarlo alla view.
-Dal punto di vista concorrente, per ottimizzare il tempo di elaborazione delle velocità e delle posizioni, sarà
-sicuramente conveniente suddividere il lavoro per più unità di calcolo, così da sfruttare appunto la concorrenza.
-Ci sarà comunque quache differenza tra i 3 approcci implementati.
+Il modello di simulazione dei boid, formulato da Craig Reynolds nel 1986, rappresenta un sistema multi-agente in cui 
+entità autonome (boid) si muovono in uno spazio condiviso, modificando la propria traiettoria in funzione dei boid 
+circostanti e di parametri predefiniti.
+
+Dal punto di vista computazionale, l'algoritmo richiede l'aggiornamento sincronizzato delle velocità di ciascun boid 
+in base alle posizioni correnti dei vicini, seguito dall'aggiornamento delle posizioni secondo le nuove velocità 
+calcolate, per poi infine renderizzare lo stato aggiornato tramite l'interfaccia grafica.
+
+In ottica di ottimizzazione delle prestazioni tramite programmazione concorrente, emerge l'opportunità di distribuire 
+il carico computazionale tra più unità di elaborazione. Tale distribuzione deve tuttavia preservare la correttezza 
+dell'algoritmo, garantendo che l'aggiornamento delle velocità preceda sempre quello delle posizioni, e che la 
+visualizzazione avvenga solo a computazione completata.
+
+Le tre implementazioni concorrenti sviluppate (multithreading tradizionale, framework Executor e virtual threads) 
+presentano approcci distinti alla parallelizzazione, pur mantenendo invariata la semantica del problema.
 
 \chapter{Design}
 % A description of the adopted design, the strategy and architecture.
-Il design considerato non varia eccessivamente da versione a versione: ogni versione eredita da una superclasse che ha
-i metodi comuni. Dalla versione sequenziale è stata cambiata la gestione del framerate, che viene calcolato da un counter
-incrementato ad ogni fine calcolo di velocità e posizioni e comunicato alla view da un thread a parte.
-Inoltre per rendere la view il più responsive possibile, si è gestita la parte di start, stop e resume attraverso dei
-campi del model, di modo che il ciclo che aggiorna la view non andasse mai in wait.
+Il design implementato presenta una struttura architetturale modulare e flessibile, centrata attorno all'interfaccia `BoidsSimulator` che definisce il contratto fondamentale per tutte le implementazioni. Questa interfaccia è parzialmente realizzata dalla classe astratta `AbstractBoidsSimulator`, che fornisce l'implementazione comune e definisce due metodi astratti: `init()` per l'inizializzazione e `clear()` per la pulizia delle risorse.
+
+Da questa classe astratta derivano le implementazioni concrete:
+\begin{itemize}
+    \item `SequentialSimulator`: implementazione sequenziale di riferimento
+    \item `PlatformSimulator`: versione concorrente basata su platform threads
+    \item `ExecutorSimulator`: versione che utilizza il framework Executor con approccio task-based
+\end{itemize}
+
+La versione con Virtual Thread (`VirtualThreadSimulator`) estende `PlatformSimulator`, condividendo gran parte della logica ma differenziandosi nelle modalità di creazione e gestione dei thread.
+
+Rispetto all'implementazione sequenziale, è stata rielaborata la gestione del framerate mediante un contatore atomico incrementato alla conclusione di ogni ciclo completo di aggiornamento (velocità e posizioni) e comunicato all'interfaccia grafica tramite un thread dedicato.
+
+L'architettura è stata progettata per massimizzare la reattività dell'interfaccia utente: le operazioni di avvio, interruzione e ripresa della simulazione vengono gestite attraverso variabili di stato condivise, evitando operazioni bloccanti nel ciclo di rendering.
 
 \section{Multithreaded}
-Nella versione multithreaded si è deciso di suddividere il carico di lavoro in un numero di thread pari al numero di processori
-della macchina su cui gira il programma. Ogni thread aggiorna la velocità e la posizione della sua partizione di thread.
-Per requisito, dovendo prima aggiornare tutte le velocità e poi successivamente tutte le posizione, si sono usate due barriere,
-una per le velocità e una per le posizioni, cosicchè i thread si sincronizzino e svolgano tutti lo stesso compito.
-Inoltre, come azione di rottura della seconda barriera, considerata come fine iterazione, si è aggiunto l'incremento del
-counter di iterazioni per il calcolo del framerate.
+L'implementazione multithreaded adotta una strategia di decomposizione del dominio, distribuendo il carico di calcolo su un numero di thread equivalente alle unità di elaborazione disponibili nel sistema. Ciascun thread gestisce una porzione specifica dell'insieme dei boid, occupandosi del calcolo delle velocità e dell'aggiornamento delle posizioni.
+
+Per preservare la correttezza dell'algoritmo, che necessita di una netta separazione tra la fase di calcolo delle velocità e quella di aggiornamento delle posizioni, sono state integrate due \texttt{MyBarrier}:
+\begin{itemize}
+    \item La prima garantisce che il calcolo delle velocità sia completato da tutti i thread prima di procedere
+    \item La seconda coordina il completamento dell'aggiornamento delle posizioni
+\end{itemize}
+
+Quando tutti i thread superano la seconda barriera, segnando la fine di un'iterazione dell'algoritmo, un contatore atomico (\texttt{AtomicInteger}) viene incrementato per consentire il calcolo accurato del framerate e valutare così le prestazioni del sistema.
+
+\subsection{MyBarrier}
+Per coordinare i thread nella simulazione multithreaded, è stata implementata una barriera personalizzata (\texttt{MyBarrier}) utilizzando i primitivi di sincronizzazione forniti da Java, in particolare \texttt{Lock} e \texttt{Condition}. Questa implementazione si ispira alla funzionalità della classe \texttt{CyclicBarrier} della libreria standard \texttt{java.util.concurrent}, ma con un'implementazione specifica per le esigenze della simulazione.
+
+La barriera opera secondo il seguente principio: ciascun thread, al raggiungimento di un punto di sincronizzazione, invoca il metodo \texttt{await()}, che blocca il thread chiamante fino a quando tutti gli altri thread (il cui numero è specificato durante l'inizializzazione della barriera) non abbiano similmente raggiunto il punto di sincronizzazione.
+
+L'implementazione utilizza:
+\begin{itemize}
+    \item Un \texttt{ReentrantLock} per garantire l'accesso esclusivo alla sezione critica
+    \item Una variabile \texttt{Condition} per la gestione dell'attesa e della notifica
+    \item Un contatore per tracciare il numero di thread arrivati alla barriera
+\end{itemize}
+
+La natura ciclica della barriera consente il suo riutilizzo in iterazioni successive: una volta che tutti i thread hanno superato la barriera, il contatore viene azzerato in mutua esclusione dal primo thread che si risveglia, permettendo così di riutilizzare la stessa istanza per sincronizzazioni successive all'interno del ciclo principale della simulazione.
 
 \section{Executors}
-Nella versione con l'executor framework la strategia cambia, poichè ragionando a task, il calcolo di un singolo boid
-diventa un'unica unità di calcolo finita che viene delegata dallo stesso thread che aggiorna la view.
-Considerando una dimensione a priori per le partizioni di boid, ognuna di esse viene assegnata ad un task per il calcolo
-delle velocità e poi per quello delle posizioni. La sincronizzazione avviene attraverso i Future ritornati dall'Executor,
-per i quali aspettiamo il completamento prima di passare al calcolo successivo. Alla fine del calcolo delle posizioni
-viene aggiornato anche il counter di iterazioni per il framerate.
+
+L'implementazione basata su Executor Framework adotta un approccio task-based, in cui il calcolo associato a ciascun boid viene incapsulato come unità atomica di elaborazione. Il thread principale, responsabile anche dell'aggiornamento dell'interfaccia grafica, orchestra la distribuzione e il coordinamento dei task.
+
+La strategia di decomposizione prevede il partizionamento dell'insieme dei boid in sottoinsiemi di cardinalità predefinita. Per ciascuna partizione vengono generati due tipi di task sequenziali:
+\begin{itemize}
+    \item Task per il calcolo delle velocità
+    \item Task per l'aggiornamento delle posizioni
+\end{itemize}
+
+La sincronizzazione tra le fasi di elaborazione è garantita dal meccanismo dei \texttt{Future<Void>} restituiti dall'invocazione dei metodi \texttt{submit()} dell'executor. Il thread principale effettua operazioni di \texttt{get()} su tutti i \texttt{Future} relativi al calcolo delle velocità, assicurando il completamento di questa fase prima di procedere con la sottomissione dei task per l'aggiornamento delle posizioni.
+
+Al termine dell'elaborazione di tutti i task relativi all'aggiornamento posizionale, viene incrementato atomicamente il contatore delle iterazioni completate, consentendo la misurazione accurata del framerate.
+
+Questo approccio sfrutta efficacemente il pool di thread gestito dall'executor, ottimizzando l'utilizzo delle risorse computazionali attraverso una schedulazione dinamica dei task, piuttosto che una rigida associazione thread-partizione come nell'implementazione multithreaded tradizionale.
 
 \section{Virtual threads}
-Nella versione con i virtual threads l'approccio è un mix dei due precedenti poichè non considerando quanti thread
-possiamo generare in base ai processori, ne generiamo tanti quanti le partizioni del nostro set di boid, come nella versione
-executor. Però, non avendo i Future, come meccanismo di coordinazione abbiamo deciso di riusare le barriere, come appunto
-nel caso dei Platform threads
+L'implementazione basata su virtual threads rappresenta un'ibridazione degli approcci precedenti, combinando elementi del partizionamento task-based e della sincronizzazione esplicita. In questa soluzione, viene abbandonata la limitazione imposta dal numero di unità di elaborazione fisiche, adottando invece un modello in cui:
+
+\begin{itemize}
+    \item Ogni partizione dell'insieme dei boid viene assegnata a un virtual thread dedicato, consentendo un grado di parallelismo potenzialmente più elevato rispetto all'implementazione con platform threads
+    \item Il meccanismo di sincronizzazione si basa su barriere cicliche, analogamente all'approccio multithreaded tradizionale, anziché sul pattern di coordinazione basato su \texttt{Future<Void>} dell'implementazione Executor
+\end{itemize}
+
+Questa architettura sfrutta la leggerezza computazionale dei virtual threads, introdotti come caratteristica di anteprima in Java 19 e finalizzati in Java 21, che permettono la creazione di un numero significativamente maggiore di thread rispetto ai tradizionali platform threads, con un overhead di sistema notevolmente ridotto grazie alla loro gestione mediante il meccanismo di continuazioni implementato nel runtime Java.
 
 \chapter{Comportamento}
 % A description of the behaviour of the system using one or multiple Petri Nets, choosing the propor level of abstraction.
