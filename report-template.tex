@@ -172,7 +172,6 @@ La versione Executor e Virtual non è stato testato il cambiamento in base al nu
 
 \begin{table}[h!]
     \centering
-    \caption{Risultati delle performance per configurazioni Sequential}
     \begin{tabular}{|c|c|}
     \hline
     \multicolumn{2}{|c|}{\textbf{Sequential}} \\
@@ -184,12 +183,12 @@ La versione Executor e Virtual non è stato testato il cambiamento in base al nu
     500  & 1163  \\
     \hline
     \end{tabular}
+    \caption{Risultati delle performance per configurazioni Sequential}
     \label{tab:sequential-performance}
 \end{table}
 
 \begin{table}[h!]
     \centering
-    \caption{Risultati delle performance per configurazioni Platform}
     \begin{tabular}{|c|c|c|}
     \hline
     \multicolumn{3}{|c|}{\textbf{Platform}} \\
@@ -211,12 +210,12 @@ La versione Executor e Virtual non è stato testato il cambiamento in base al nu
     500  & 2 & 259  \\
     \hline
     \end{tabular}
+    \caption{Risultati delle performance per configurazioni Platform}
     \label{tab:platform-performance}
 \end{table}
 
 \begin{table}[h!]
     \centering
-    \caption{Risultati delle performance per configurazioni Executor}
     \begin{tabular}{|c|c|c|c|}
     \hline
     \multicolumn{4}{|c|}{\textbf{Executor}} \\
@@ -238,12 +237,12 @@ La versione Executor e Virtual non è stato testato il cambiamento in base al nu
     500  & 1   & 8 & 2718 \\
     \hline
     \end{tabular}
+    \caption{Risultati delle performance per configurazioni Executor}
     \label{tab:executor-performance}
 \end{table}
 
 \begin{table}[h!]
     \centering
-    \caption{Risultati delle performance per configurazioni Virtual}
     \begin{tabular}{|c|c|c|c|}
     \hline
     \multicolumn{4}{|c|}{\textbf{Virtual}} \\
@@ -265,6 +264,7 @@ La versione Executor e Virtual non è stato testato il cambiamento in base al nu
     500  & 1   & 8  & 207  \\
     \hline
     \end{tabular}
+    \caption{Risultati delle performance per configurazioni Virtual}
     \label{tab:virtual-performance}
 \end{table}
 
@@ -278,6 +278,47 @@ Grafico di confronto delle prestazioni
     \caption{Comparazione del framerate medio tra le quattro implementazioni al variare del numero di boid.}
     \label{fig:performance_comparison}
 \end{figure}
+
+La misura quantitativa delle prestazioni nella programmazione concorrente è lo \textbf{speedup}, definito come:
+
+\[
+S = \frac{T_1}{T_N}
+\]
+
+dove:
+\begin{itemize}
+    \item $N$ è il numero di processori
+    \item $T_1$ è il tempo di esecuzione dell'algoritmo sequenziale
+    \item $T_N$ è il tempo di esecuzione dell'algoritmo parallelo con $N$ processori
+\end{itemize}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+    \hline
+    \textbf{Boids}& \textbf{Sequential (ms)}& \textbf{Platform (ms)} & \textbf{Speed-up} \\
+    \hline
+    500  & 1163 & 142 & 8.19  \\
+    1500 & 1879 & 673 & 2.79  \\
+    3000 & 6549 & 2931 & 2.23 \\
+    \hline
+    \end{tabular}
+    \caption{Risultati calcolo speedup per configurazioni Platform}
+
+    \label{tab:platform-speedup}
+\end{table}
+
+I risultati evidenziano pattern significativi nelle performance delle diverse implementazioni:
+
+\begin{itemize}
+    \item L'implementazione con platform threads mostra un sostanziale miglioramento rispetto alla versione sequenziale, con prestazioni che migliorano all'aumentare dei thread fino a saturare il numero di core fisici disponibili.
+    
+    \item L'implementazione basata su Executor Framework presenta un overhead computazionale considerevole, risultando la meno efficiente tra le soluzioni testate. Questo overhead può essere attribuito alla gestione dei numerosi task e alla sincronizzazione basata sui Future, che introduce un costo aggiuntivo rispetto alla sincronizzazione diretta con barriere.
+    
+    \item L'implementazione con virtual threads emerge come la soluzione più efficiente, offrendo prestazioni paragonabili o leggermente superiori all'implementazione con platform threads, ma con una complessità implementativa inferiore. La leggerezza dei virtual thread consente di ottenere un elevato grado di parallelismo con un overhead ridotto.
+\end{itemize}
+
+È interessante notare come la granularità della parallelizzazione influenzi le prestazioni: nella versione Virtual, la configurazioni con 50 boid per unità di lavoro tende a offrire il miglior compromesso tra overhead di gestione e utilizzo efficiente delle risorse di calcolo.
 
 
 \chapter{Verifica con JPF}
