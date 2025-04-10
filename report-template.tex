@@ -154,13 +154,65 @@ Per valutare l'efficacia delle diverse implementazioni, sono stati condotti test
 \section{Metodologia}
 I test sono stati condotti con la seguente metodologia:
 \begin{itemize}
-    \item Numero di boid testati: [range numerico]
-    \item Durata di ciascun test: [durata]
-    \item Metriche raccolte: framerate medio (FPS)
-    \item Numero di ripetizioni per test: [numero] per garantire significatività statistica
+    \item Numero di boid testati: 500, 1500, 3000
+    \item Numero di iterazioni per ciascun test: 100
+    \item Metriche raccolte: tempo di esecuzione medio per iterazione (in millisecondi) 
+    \item Numero di ripetizioni per test: 3 per garantire significatività statistica (ne riportiamo la media)
+\end{itemize}
+
+Per la versione multithreaded tradizionale, sono stati testati diversi numeri di thread (2, 4, 8) per valutare l'impatto del numero di core disponibili. La scelta di questi valori è stata guidata dalla disponibilità di unità di elaborazione fisiche nel sistema di test(massimo 8 core).
+
+La versione Executor e Virtual non è stato testato il cambiamento in base al numero di core, ma piuttosto:
+\begin{itemize}
+    \item (Executor) il numero di boid assegnato ad ogni task: 1, 50, 300
+    \item (Virtual) il numero di boid assegnato ad ogni virtual thread: 1, 50, 300
 \end{itemize}
 
 \section{Risultati}
+
+\begin{table}[h!]
+    \centering
+    \caption{Risultati delle performance per configurazioni Sequential}
+    \begin{tabular}{|c|c|}
+    \hline
+    \multicolumn{2}{|c|}{\textbf{Sequential}} \\
+    \hline
+    \textbf{Boids}& \textbf{Time (ms)}\\
+    \hline
+    3000 & 6549 \\
+    1500 & 1879  \\
+    500  & 1163  \\
+    \hline
+    \end{tabular}
+    \label{tab:sequential-performance}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \caption{Risultati delle performance per configurazioni Platform}
+    \begin{tabular}{|c|c|c|}
+    \hline
+    \multicolumn{3}{|c|}{\textbf{Platform}} \\
+    \hline
+    \textbf{Boids} & \textbf{N threads} & \textbf{Time (ms)}\\
+    \hline
+    3000 & 8 & 2931 \\
+    1500 & 8 & 673  \\
+    500  & 8 & 142  \\
+    \hline
+    \hline
+    3000 & 4 & 3266 \\
+    1500 & 4 & 802  \\
+    500  & 4 & 136  \\
+    \hline
+    \hline
+    3000 & 2 & 4381 \\
+    1500 & 2 & 1489  \\
+    500  & 2 & 259  \\
+    \hline
+    \end{tabular}
+    \label{tab:platform-performance}
+\end{table}
 
 \begin{table}[h!]
     \centering
@@ -214,33 +266,6 @@ I test sono stati condotti con la seguente metodologia:
     \hline
     \end{tabular}
     \label{tab:virtual-performance}
-\end{table}
-
-\begin{table}[h!]
-    \centering
-    \caption{Risultati delle performance per configurazioni Platform}
-    \begin{tabular}{|c|c|c|}
-    \hline
-    \multicolumn{3}{|c|}{\textbf{Platform}} \\
-    \hline
-    \textbf{Boids} & \textbf{N threads} & \textbf{Time (ms)}\\
-    \hline
-    3000 & 8 & 2931 \\
-    1500 & 8 & 673  \\
-    500  & 8 & 142  \\
-    \hline
-    \hline
-    3000 & 4 & 3266 \\
-    1500 & 4 & 802  \\
-    500  & 4 & 136  \\
-    \hline
-    \hline
-    3000 & 2 & 4381 \\
-    1500 & 2 & 1489  \\
-    500  & 2 & 259  \\
-    \hline
-    \end{tabular}
-    \label{tab:platform-performance}
 \end{table}
 
 \newpage
