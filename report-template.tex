@@ -54,7 +54,6 @@ Da questa classe astratta derivano le implementazioni concrete:
 \end{itemize}
 
 \section{Modifiche generali}
-Rispetto all'implementazione sequenziale, è stata rielaborata la gestione del framerate mediante un contatore atomico incrementato alla conclusione di ogni ciclo completo di aggiornamento (velocità e posizioni) e comunicato all'interfaccia grafica tramite un thread dedicato.
 
 L'architettura è stata progettata per massimizzare la reattività dell'interfaccia utente: le operazioni di avvio, interruzione e ripresa della simulazione vengono gestite attraverso variabili di stato condivise, evitando operazioni bloccanti nel ciclo di rendering.
 
@@ -71,7 +70,7 @@ Per preservare la correttezza dell'algoritmo, che necessita di una netta separaz
     \item La seconda coordina il completamento dell'aggiornamento delle posizioni
 \end{itemize}
 
-Quando tutti i thread superano la seconda barriera, segnando la fine di un'iterazione dell'algoritmo, un contatore atomico (\texttt{AtomicInteger}) viene incrementato per consentire il calcolo accurato del framerate e valutare così le prestazioni del sistema.
+Quando tutti i thread superano la seconda barriera, segnando la fine di un'iterazione dell'algoritmo, viene eseguito l'aggiornamento dell'interfaccia grafica e il calcolo del \texttt{framerate}.
 
 \subsection{MyBarrier}
 Per coordinare i thread nella simulazione multithreaded, è stata implementata una barriera personalizzata (\texttt{MyBarrier}) utilizzando i primitivi di sincronizzazione forniti da Java, in particolare \texttt{Lock} e \texttt{Condition}. Questa implementazione si ispira alla funzionalità della classe \texttt{CyclicBarrier} della libreria standard \texttt{java.util.concurrent}, ma con un'implementazione specifica per le esigenze della simulazione.
@@ -99,7 +98,7 @@ La strategia di decomposizione prevede il partizionamento dell'insieme dei boid 
 
 La sincronizzazione tra le fasi di elaborazione è garantita dal meccanismo dei \texttt{Future<Void>} restituiti dall'invocazione dei metodi \texttt{submit()} dell'executor. Il thread principale effettua operazioni di \texttt{get()} su tutti i \texttt{Future} relativi al calcolo delle velocità, assicurando il completamento di questa fase prima di procedere con la sottomissione dei task per l'aggiornamento delle posizioni.
 
-Al termine dell'elaborazione di tutti i task relativi all'aggiornamento posizionale, viene incrementato atomicamente il contatore delle iterazioni completate, consentendo la misurazione accurata del framerate.
+Al termine dell'elaborazione di tutti i task relativi all'aggiornamento posizionale, viene eseguito l'aggiornamento dell'interfaccia grafica e il calcolo del \texttt{framerate}.
 
 Questo approccio sfrutta efficacemente il pool di thread gestito dall'executor, ottimizzando l'utilizzo delle risorse computazionali attraverso una schedulazione dinamica dei task, piuttosto che una rigida associazione thread-partizione come nell'implementazione multithreaded tradizionale.
 
@@ -219,7 +218,6 @@ In particolare sono state rimosse le seguenti componenti:
     \item tutta la View, che gestiva l'interfaccia grafica e il rendering dei boids
     \item il controllo di flusso con \texttt{start}, \texttt{stop}, \texttt{suspend} e \texttt{resume} 
     \item randomicità nella generazione delle posizioni iniziali e velocità dei boids, perchè altrimenti JPF avrebbe esplorato tutti i possibili valori nel range di quelli casuali
-    \item l'aggiornamento del framerate, che non è necessario per la verifica formale
     \item il numero di boids, abbassato e fissato a 5
     \item il numero di thread, fissato a 2
 \end{itemize}
