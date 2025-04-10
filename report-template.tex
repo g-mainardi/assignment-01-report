@@ -162,36 +162,88 @@ I test sono stati condotti con la seguente metodologia:
 
 \section{Risultati}
 
-\subsection{Versione Sequenziale}
-\begin{itemize}
-    \item Prestazioni baseline con [numero] boid: [valori]
-    \item Scalabilità all'aumentare del numero di boid: [descrizione trend]
-    \item Considerazioni sul collo di bottiglia: [analisi]
-\end{itemize}
+\begin{table}[h!]
+    \centering
+    \caption{Risultati delle performance per configurazioni Executor}
+    \begin{tabular}{|c|c|c|c|}
+    \hline
+    \multicolumn{4}{|c|}{\textbf{Executor}} \\
+    \hline
+    \textbf{Boids} & \textbf{Boids/task} & \textbf{Cores} & \textbf{Time (ms)}\\
+    \hline
+    3000 & 300 & 8 & 13822 \\
+    1500 & 300 & 8 & 4614 \\
+    500  & 300 & 8 & 1484 \\
+    \hline
+    \hline
+    3000 & 50  & 8 & 15688 \\
+    1500 & 50  & 8 & 3841 \\
+    500  & 50  & 8 & 1846 \\
+    \hline
+    \hline
+    3000 & 1   & 8 & 27537 \\
+    1500 & 1   & 8 & 10132 \\
+    500  & 1   & 8 & 2718 \\
+    \hline
+    \end{tabular}
+    \label{tab:executor-performance}
+\end{table}
 
-\subsection{Versione Platform Threads}
-\begin{itemize}
-    \item Prestazioni con [numero] boid e [numero] thread: [valori]
-    \item Speedup rispetto alla versione sequenziale: [fattore]
-    \item Efficienza con diverse dimensioni di partizione: [analisi]
-    \item Overhead di sincronizzazione: [valutazione]
-\end{itemize}
+\begin{table}[h!]
+    \centering
+    \caption{Risultati delle performance per configurazioni Virtual}
+    \begin{tabular}{|c|c|c|c|}
+    \hline
+    \multicolumn{4}{|c|}{\textbf{Virtual}} \\
+    \hline
+    \textbf{Boids} & \textbf{Virtual/task} & \textbf{Cores} & \textbf{Time (ms)}\\
+    \hline
+    3000 & 300 & 8  & 2381 \\
+    1500 & 300 & 8  & 679  \\
+    500  & 300 & 8  & 186  \\
+    \hline
+    \hline
+    3000 & 50  & 8  & 2392 \\
+    1500 & 50  & 8  & 644  \\
+    500  & 50  & 8  & 118  \\
+    \hline
+    \hline
+    3000 & 1   & 8  & 3548 \\
+    1500 & 1   & 8  & 849  \\
+    500  & 1   & 8  & 207  \\
+    \hline
+    \end{tabular}
+    \label{tab:virtual-performance}
+\end{table}
 
-\subsection{Versione Executor Framework}
-\begin{itemize}
-    \item Prestazioni con [numero] boid e dimensione task [valore]: [valori]
-    \item Speedup rispetto alla versione sequenziale: [fattore]
-    \item Impatto della granularità dei task: [analisi]
-    \item Overhead di gestione dei task: [valutazione]
-\end{itemize}
+\begin{table}[h!]
+    \centering
+    \caption{Risultati delle performance per configurazioni Platform}
+    \begin{tabular}{|c|c|c|}
+    \hline
+    \multicolumn{3}{|c|}{\textbf{Platform}} \\
+    \hline
+    \textbf{Boids} & \textbf{N threads} & \textbf{Time (ms)}\\
+    \hline
+    3000 & 8 & 2931 \\
+    1500 & 8 & 673  \\
+    500  & 8 & 142  \\
+    \hline
+    \hline
+    3000 & 4 & 3266 \\
+    1500 & 4 & 802  \\
+    500  & 4 & 136  \\
+    \hline
+    \hline
+    3000 & 2 & 4381 \\
+    1500 & 2 & 1489  \\
+    500  & 2 & 259  \\
+    \hline
+    \end{tabular}
+    \label{tab:platform-performance}
+\end{table}
 
-\subsection{Versione Virtual Threads}
-\begin{itemize}
-    \item Prestazioni con [numero] boid e [numero] virtual threads: [valori]
-    \item Speedup rispetto alla versione sequenziale: [fattore]
-    \item Comparazione con platform threads: [analisi differenze]
-    \item Comportamento con elevato numero di threads: [osservazioni]
-\end{itemize}
+\newpage
 
 \section{Analisi Comparativa}
 Grafico di confronto delle prestazioni
