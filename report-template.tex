@@ -47,12 +47,11 @@ Il design implementato presenta una struttura architetturale modulare e flessibi
 
 Da questa classe astratta derivano le implementazioni concrete:
 \begin{itemize}
-    \item `SequentialSimulator`: implementazione sequenziale di riferimento
-    \item `PlatformSimulator`: versione concorrente basata su platform threads
-    \item `ExecutorSimulator`: versione che utilizza il framework Executor con approccio task-based
+    \item `BoidsSimulator`: implementazione sequenziale di riferimento
+    \item `BoidsSimulatorPlatform`: versione concorrente basata su platform threads
+    \item `BoidsSimulatorExecutor`: versione che utilizza il framework Executor con approccio task-based
+    \item `BoidsSimulatorVirtual`: versione che sfrutta i virtual threads introdotti in Java 19, in realtà questa estende direttamente `BoidsSimulatorPlatform`, in quanto condivide parte dei meccanismi di sincronizzazione
 \end{itemize}
-
-La versione con Virtual Thread (`VirtualThreadSimulator`) estende `PlatformSimulator`, condividendo gran parte della logica ma differenziandosi nelle modalità di creazione e gestione dei thread.
 
 \section{Modifiche generali}
 Rispetto all'implementazione sequenziale, è stata rielaborata la gestione del framerate mediante un contatore atomico incrementato alla conclusione di ogni ciclo completo di aggiornamento (velocità e posizioni) e comunicato all'interfaccia grafica tramite un thread dedicato.
