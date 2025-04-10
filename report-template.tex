@@ -213,7 +213,86 @@ JPF è particolarmente utile per verificare le proprietà di sicurezza e corrett
 L'analisi si è concentrata su una versione semplificata del modello, mantenendo gli aspetti essenziali di sincronizzazione tra i thread attraverso la nostra implementazione personalizzata `MyBarrier`. La verifica ha l'obiettivo di garantire l'assenza di deadlock e la corretta sincronizzazione tra le fasi di calcolo delle velocità e aggiornamento delle posizioni evitando corse critiche, elementi fondamentali per la correttezza dell'algoritmo.
 
 \section{Scorporazione del modello}
+Per diminuire il numero di stati esplorati da JPF, è stato necessario semplificare il modello originale. La versione semplificata mantiene la logica di calcolo delle velocità e aggiornamento delle posizioni, ma elimina le interazioni con l'interfaccia grafica e altre funzionalità non essenziali per la verifica formale.
+
+In particolare sono state rimosse le seguenti componenti:
+\begin{itemize}
+    \item tutta la View, che gestiva l'interfaccia grafica e il rendering dei boids
+    \item il controllo di flusso con \texttt{start}, \texttt{stop}, \texttt{suspend} e \texttt{resume} 
+    \item randomicità nella generazione delle posizioni iniziali e velocità dei boids, perchè altrimenti JPF avrebbe esplorato tutti i possibili valori nel range di quelli casuali
+    \item l'aggiornamento del framerate, che non è necessario per la verifica formale
+    \item il numero di boids, abbassato e fissato a 5
+    \item il numero di thread, fissato a 2
+\end{itemize}
+
+Inoltre è stato necessario reimplementare come classi \texttt{P2d} e \texttt{V2d} che erano stati progettati come record, costrutto introdotto in Java 21, perchè JPF compila invece con Java 11 al massimo, dunque non sono supportati.
 
 \section{Risultati}
+
+\subsection{Corsa critica in MyBarrier}
+La verifica con JPF ha permesso di individuare una corsa critica che si verificava quando i thread si risvegliavano dopo aver raggiunto la barriera di sincronizzazione.
+
+\begin{verbatim}
+    ====================================================== error 1
+    gov.nasa.jpf.listener.PreciseRaceDetector
+    race for field pcd.ass01.MyBarrier@250.broken
+      Thread-1 at pcd.ass01.MyBarrier.reset(MyBarrier.java:53)
+            "broken = false;"  WRITE: putfield pcd.ass01.MyBarrier.broken
+      Thread-2 at pcd.ass01.MyBarrier.reset(MyBarrier.java:52)
+            "if (broken) {"  READ:  getfield pcd.ass01.MyBarrier.broken
+    ====================================================== 
+\end{verbatim}
+
+La verifica ha identificato una corsa critica nella classe \texttt{MyBarrier}: quando i thread si risvegliavano dopo aver raggiunto la sincronizzazione, accedevano contemporaneamente alla variabile condivisa \texttt{broken} senza adeguata protezione. In particolare, alcuni thread potevano leggere questa variabile mentre altri la stavano modificando.
+
+Il problema è stato risolto estendendo la sezione critica nel metodo \texttt{reset} mediante un lock che garantisce l'accesso esclusivo durante il reset della barriera, assicurando che la reinizializzazione dello stato della barriera avvenga in modo atomico e coerente tra i thread partecipanti.
+
+\subsection{Corsa critica in updateVelocity}
+Risolvendo il problema precedente, JPF ha evidenziato un'ulteriore criticità.
+
+\begin{verbatim}
+    ====================================================== error 1
+    gov.nasa.jpf.listener.PreciseRaceDetector
+    race for field pcd.ass01.Boid@230.vel
+    Thread-1 at pcd.ass01.Boid.updateVelocity(Boid.java:39)
+            ".sum(cohesion.mul(model.getCohesionWeight()));"  WRITE: putfield pcd.ass01.Boid.vel
+    Thread-2 at pcd.ass01.Boid.getVel(Boid.java:23)
+            "var value = vel;"  READ:  getfield pcd.ass01.Boid.vel
+    ======================================================
+\end{verbatim}
+
+Durante l'esecuzione del metodo \texttt{updateVelocity} infatti, ogni thread accede in lettura all'intero insieme dei boid per calcolare le forze di coesione, separazione e allineamento, mentre modifica il campo \texttt{velocity} del boid corrente. Questa situazione genera una corsa critica quando un thread legge la velocità di un boid che viene contemporaneamente modificata da un altro thread.
+
+In particolare, se due thread accedono a boid diversi, ma uno di questi boid ha il campo \texttt{velocity} modificato da un altro thread, si verifica una condizione di race. Per affrontare questo problema, sono state esplorate due soluzioni principali:
+
+\begin{itemize}
+    \item **Copia difensiva:** Ogni thread lavora su una copia locale dei boid, che viene poi utilizzata per sovrascrivere i boid originali al termine del calcolo delle nuove velocità e posizioni. Tuttavia, questa soluzione ha introdotto problemi di coerenza, rompendo l'algoritmo di simulazione nell'applicazione principale.
+    \item **Lock sul campo \texttt{velocity}:** È stato implementato un meccanismo di lock per proteggere l'accesso al campo \texttt{velocity} del boid corrente. Questo approccio ha garantito che ogni thread potesse accedere e modificare la velocità di un boid senza interferenze da parte di altri thread, preservando la correttezza dell'algoritmo.
+\end{itemize}
+
+La soluzione basata sul lock si è dimostrata efficace, eliminando le corse critiche e mantenendo il comportamento corretto dell'algoritmo. Sebbene l'uso di lock possa introdurre un leggero overhead, esso è stato ritenuto accettabile rispetto ai benefici in termini di affidabilità e coerenza del sistema.
+
+\begin{verbatim}
+    ====================================================== system under test
+    pcd.ass01.BoidsSimulation.main()
+
+    ====================================================== search started: 10/04/25, 00:03
+    [WARNING] orphan NativePeer method: jdk.internal.reflect.Reflection.getCallerClass(I)Ljava/lang/Class;
+
+    ====================================================== results
+    no errors detected
+
+    ====================================================== statistics
+    elapsed time:       00:01:17
+    states:             new=235051,visited=349268,backtracked=584319,end=0
+    search:             maxDepth=2073,constraints=0
+    choice generators:  thread=235052 (signal=0,lock=1111,sharedRef=211717,threadApi=4,reschedule=19710), data=0
+    heap:               new=142192,released=249301,maxLive=763,gcCycles=571041
+    instructions:       22882466
+    max memory:         364MB
+    loaded code:        classes=127,methods=3161
+
+    ====================================================== search finished: 10/04/25, 00:04
+\end{verbatim}
 
 \end{document}
