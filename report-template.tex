@@ -230,14 +230,16 @@ Inoltre è stato necessario reimplementare come classi \texttt{P2d} e \texttt{V2
 La verifica con JPF ha permesso di individuare una corsa critica che si verificava quando i thread si risvegliavano dopo aver raggiunto la barriera di sincronizzazione.
 
 \begin{verbatim}
-    ====================================================== error 1
-    gov.nasa.jpf.listener.PreciseRaceDetector
-    race for field pcd.ass01.MyBarrier@250.broken
-      Thread-1 at pcd.ass01.MyBarrier.reset(MyBarrier.java:53)
-            "broken = false;"  WRITE: putfield pcd.ass01.MyBarrier.broken
-      Thread-2 at pcd.ass01.MyBarrier.reset(MyBarrier.java:52)
-            "if (broken) {"  READ:  getfield pcd.ass01.MyBarrier.broken
-    ====================================================== 
+====================================================== error 1
+gov.nasa.jpf.listener.PreciseRaceDetector
+race for field pcd.ass01.MyBarrier@250.broken
+    Thread-1 at pcd.ass01.MyBarrier.reset(MyBarrier.java:53)
+        "broken = false;"  
+        WRITE: putfield pcd.ass01.MyBarrier.broken
+    Thread-2 at pcd.ass01.MyBarrier.reset(MyBarrier.java:52)
+        "if (broken) {"  
+        READ:  getfield pcd.ass01.MyBarrier.broken
+====================================================== 
 \end{verbatim}
 
 La verifica ha identificato una corsa critica nella classe \texttt{MyBarrier}: quando i thread si risvegliavano dopo aver raggiunto la sincronizzazione, accedevano contemporaneamente alla variabile condivisa \texttt{broken} senza adeguata protezione. In particolare, alcuni thread potevano leggere questa variabile mentre altri la stavano modificando.
@@ -248,48 +250,51 @@ Il problema è stato risolto estendendo la sezione critica nel metodo \texttt{re
 Risolvendo il problema precedente, JPF ha evidenziato un'ulteriore criticità.
 
 \begin{verbatim}
-    ====================================================== error 1
-    gov.nasa.jpf.listener.PreciseRaceDetector
-    race for field pcd.ass01.Boid@230.vel
+====================================================== error 1
+gov.nasa.jpf.listener.PreciseRaceDetector
+race for field pcd.ass01.Boid@230.vel
     Thread-1 at pcd.ass01.Boid.updateVelocity(Boid.java:39)
-            ".sum(cohesion.mul(model.getCohesionWeight()));"  WRITE: putfield pcd.ass01.Boid.vel
+        ".sum(cohesion.mul(model.getCohesionWeight()));"  
+        WRITE: putfield pcd.ass01.Boid.vel
     Thread-2 at pcd.ass01.Boid.getVel(Boid.java:23)
-            "var value = vel;"  READ:  getfield pcd.ass01.Boid.vel
-    ======================================================
+        "var value = vel;"  
+        READ:  getfield pcd.ass01.Boid.vel
+======================================================
 \end{verbatim}
 
 Durante l'esecuzione del metodo \texttt{updateVelocity} infatti, ogni thread accede in lettura all'intero insieme dei boid per calcolare le forze di coesione, separazione e allineamento, mentre modifica il campo \texttt{velocity} del boid corrente. Questa situazione genera una corsa critica quando un thread legge la velocità di un boid che viene contemporaneamente modificata da un altro thread.
 
-In particolare, se due thread accedono a boid diversi, ma uno di questi boid ha il campo \texttt{velocity} modificato da un altro thread, si verifica una condizione di race. Per affrontare questo problema, sono state esplorate due soluzioni principali:
+In particolare, se due thread accedono a boid diversi, ma uno di questi boid ha il campo \texttt{velocity} modificato da un altro thread, si verifica una race condition. Per affrontare questo problema, sono state esplorate due soluzioni principali:
 
 \begin{itemize}
-    \item **Copia difensiva:** Ogni thread lavora su una copia locale dei boid, che viene poi utilizzata per sovrascrivere i boid originali al termine del calcolo delle nuove velocità e posizioni. Tuttavia, questa soluzione ha introdotto problemi di coerenza, rompendo l'algoritmo di simulazione nell'applicazione principale.
-    \item **Lock sul campo \texttt{velocity}:** È stato implementato un meccanismo di lock per proteggere l'accesso al campo \texttt{velocity} del boid corrente. Questo approccio ha garantito che ogni thread potesse accedere e modificare la velocità di un boid senza interferenze da parte di altri thread, preservando la correttezza dell'algoritmo.
+    \item \textbf{Copia difensiva:} Ogni thread lavora su una copia locale dei boid, che viene poi utilizzata per sovrascrivere i boid originali al termine del calcolo delle nuove velocità e posizioni. Tuttavia, questa soluzione ha introdotto problemi di coerenza, rompendo l'algoritmo di simulazione nell'applicazione principale.
+    \item \textbf{Lock sul campo \texttt{velocity}:} È stato implementato un meccanismo di lock per proteggere l'accesso al campo \texttt{velocity} del boid corrente. Questo approccio ha garantito che ogni thread potesse accedere e modificare la velocità di un boid senza interferenze da parte di altri thread, preservando la correttezza dell'algoritmo.
 \end{itemize}
 
 La soluzione basata sul lock si è dimostrata efficace, eliminando le corse critiche e mantenendo il comportamento corretto dell'algoritmo. Sebbene l'uso di lock possa introdurre un leggero overhead, esso è stato ritenuto accettabile rispetto ai benefici in termini di affidabilità e coerenza del sistema.
 
 \begin{verbatim}
-    ====================================================== system under test
-    pcd.ass01.BoidsSimulation.main()
+====================================================== system under test
+pcd.ass01.BoidsSimulation.main()
 
-    ====================================================== search started: 10/04/25, 00:03
-    [WARNING] orphan NativePeer method: jdk.internal.reflect.Reflection.getCallerClass(I)Ljava/lang/Class;
+====================================================== search started: 00:03
+====================================================== results
+no errors detected
 
-    ====================================================== results
-    no errors detected
+====================================================== statistics
+elapsed time:       00:01:17
+states:             new=235051,visited=349268,backtracked=584319,end=0
+search:             maxDepth=2073,constraints=0
+choice generators:  
+    thread=235052 
+    (signal=0,lock=1111,sharedRef=211717,threadApi=4,reschedule=19710)
+    data=0
+heap:               new=142192,released=249301,maxLive=763,gcCycles=571041
+instructions:       22882466
+max memory:         364MB
+loaded code:        classes=127,methods=3161
 
-    ====================================================== statistics
-    elapsed time:       00:01:17
-    states:             new=235051,visited=349268,backtracked=584319,end=0
-    search:             maxDepth=2073,constraints=0
-    choice generators:  thread=235052 (signal=0,lock=1111,sharedRef=211717,threadApi=4,reschedule=19710), data=0
-    heap:               new=142192,released=249301,maxLive=763,gcCycles=571041
-    instructions:       22882466
-    max memory:         364MB
-    loaded code:        classes=127,methods=3161
-
-    ====================================================== search finished: 10/04/25, 00:04
+====================================================== search finished: 00:04
 \end{verbatim}
 
 \end{document}
